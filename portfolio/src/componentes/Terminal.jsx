@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import '../css/Terminal.css';
-import { FILESYSTEM, THEMES, WELCOME_ASCII } from './filesystem';
+import { INITIAL_FILESYSTEM, THEMES, WELCOME_ASCII } from './filesystem';
 import { executeCommand } from './commands';
 
-const Terminal = () => {
+const Terminal = ({ fs, onOpenEditor }) => {
     const [input, setInput] = useState('');
     const [history, setHistory] = useState([]);
     const [currentDir, setCurrentDir] = useState('/');
@@ -11,6 +11,7 @@ const Terminal = () => {
     const [historyIdx, setHistoryIdx] = useState(-1);
     const [currentTheme, setCurrentTheme] = useState('matrix');
     const [isMatrixActive, setIsMatrixActive] = useState(false);
+    const [startTime] = useState(Date.now());
 
     const termEndRef = useRef(null);
     const inputRef = useRef(null);
@@ -42,9 +43,22 @@ const Terminal = () => {
 
     const focusInput = useCallback(() => inputRef.current?.focus(), []);
 
+    const [cursorPos, setCursorPos] = useState(0);
+
+    const updateCursor = (e) => {
+        setTimeout(() => {
+            setCursorPos(e.target.selectionStart);
+        }, 0);
+    };
+
+    const handleInput = (e) => {
+        setInput(e.target.value);
+        setCursorPos(e.target.selectionStart + 1); // Approximate, will be corrected by updateCursor
+    };
+
     const getPrompt = () => {
         const path = currentDir === '/' ? '~' : `~/${currentDir.substring(1)}`;
-        return { user: 'guest', host: 'portfolio', path, git: currentDir.startsWith('/projects') ? ' (main)' : '' };
+        return { user: 'guest', host: 'portfolio', path };
     };
 
     const PromptDisplay = ({ prompt }) => (
@@ -54,12 +68,12 @@ const Terminal = () => {
             <span className="prompt-host">{prompt.host}</span>
             <span className="prompt-separator">:</span>
             <span className="prompt-path">{prompt.path}</span>
-            {prompt.git && <span className="prompt-git">{prompt.git}</span>}
             <span className="prompt-symbol">$ </span>
         </span>
     );
 
     const handleKeyDown = (e) => {
+        updateCursor(e);
         if (e.key === 'Enter') {
             const trimmed = input.trim();
             const [cmd, ...args] = trimmed.split(/\s+/);
@@ -75,12 +89,14 @@ const Terminal = () => {
             if (cmd === 'clear') {
                 setHistory([]);
                 setInput('');
+                setCursorPos(0);
                 return;
             }
 
             const result = executeCommand(
                 cmd?.toLowerCase() || '', args, currentDir, setCurrentDir,
-                cmdHistory, setCurrentTheme, setIsMatrixActive, isMatrixActive
+                cmdHistory, setCurrentTheme, setIsMatrixActive, isMatrixActive,
+                fs, onOpenEditor
             );
 
             if (result === 'CLEAR') {
@@ -89,15 +105,20 @@ const Terminal = () => {
                 setHistory(prev => [...prev, inputLine, ...result]);
             }
             setInput('');
+            setCursorPos(0);
         } else if (e.key === 'Tab') {
             e.preventDefault();
             const [cmd, ...args] = input.split(' ');
             const partial = args.join(' ');
+            const files = fs.dirs[currentDir];
             if (['cd', 'cat', 'ls', 'head', 'tail', 'wc', 'grep'].includes(cmd)) {
-                const files = FILESYSTEM.dirs[currentDir];
                 if (files) {
                     const matches = files.filter(f => f.startsWith(partial));
-                    if (matches.length === 1) setInput(`${cmd} ${matches[0]}`);
+                    if (matches.length === 1) {
+                        const newVal = `${cmd} ${matches[0]}`;
+                        setInput(newVal);
+                        setCursorPos(newVal.length);
+                    }
                     else if (matches.length > 1) {
                         setHistory(prev => [...prev, { type: 'output', content: matches.join('  ') }]);
                     }
@@ -105,7 +126,10 @@ const Terminal = () => {
             } else {
                 const allCmds = ['help', 'ls', 'cd', 'cat', 'pwd', 'clear', 'whoami', 'hostname', 'date', 'uname', 'uptime', 'echo', 'history', 'tree', 'grep', 'find', 'wc', 'head', 'tail', 'man', 'neofetch', 'htop', 'ping', 'curl', 'wget', 'chmod', 'sudo', 'rm', 'touch', 'mkdir', 'theme', 'matrix', 'cowsay', 'figlet', 'fortune', 'exit', 'vim', 'nano', 'id'];
                 const matches = allCmds.filter(c => c.startsWith(input));
-                if (matches.length === 1) setInput(matches[0]);
+                if (matches.length === 1) {
+                    setInput(matches[0]);
+                    setCursorPos(matches[0].length);
+                }
                 else if (matches.length > 1) {
                     setHistory(prev => [...prev, { type: 'output', content: matches.join('  ') }]);
                 }
@@ -116,11 +140,17 @@ const Terminal = () => {
                 const next = historyIdx + 1;
                 setHistoryIdx(next);
                 setInput(cmdHistory[next]);
+                setCursorPos(cmdHistory[next].length);
             }
         } else if (e.key === 'ArrowDown') {
             e.preventDefault();
-            if (historyIdx > 0) { setHistoryIdx(historyIdx - 1); setInput(cmdHistory[historyIdx - 1]); }
-            else if (historyIdx === 0) { setHistoryIdx(-1); setInput(''); }
+            if (historyIdx > 0) { 
+                const val = cmdHistory[historyIdx - 1];
+                setHistoryIdx(historyIdx - 1); 
+                setInput(val); 
+                setCursorPos(val.length);
+            }
+            else if (historyIdx === 0) { setHistoryIdx(-1); setInput(''); setCursorPos(0); }
         } else if (e.ctrlKey && e.key === 'l') {
             e.preventDefault();
             setHistory([]);
@@ -128,6 +158,7 @@ const Terminal = () => {
             e.preventDefault();
             setHistory(prev => [...prev, { type: 'input-echo', content: input + '^C', prompt: getPrompt() }]);
             setInput('');
+            setCursorPos(0);
         }
     };
 
@@ -243,18 +274,25 @@ const Terminal = () => {
 
                     <div className="input-line">
                         <PromptDisplay prompt={prompt} />
-                        <input
-                            ref={inputRef}
-                            autoFocus
-                            type="text"
-                            value={input}
-                            onChange={(e) => setInput(e.target.value)}
-                            onKeyDown={handleKeyDown}
-                            autoComplete="off"
-                            spellCheck="false"
-                            aria-label="Terminal input"
-                        />
-                        <span className="cursor-block" />
+                        <div className="input-container">
+                            <span className="input-text-before">{input.slice(0, cursorPos)}</span>
+                            <span className="cursor-block">{input[cursorPos] || '\u00A0'}</span>
+                            <span className="input-text-after">{input.slice(cursorPos + 1)}</span>
+                            <input
+                                ref={inputRef}
+                                autoFocus
+                                type="text"
+                                value={input}
+                                onChange={handleInput}
+                                onKeyDown={handleKeyDown}
+                                onKeyUp={updateCursor}
+                                onClick={updateCursor}
+                                autoComplete="off"
+                                spellCheck="false"
+                                aria-label="Terminal input"
+                                className="hidden-input"
+                            />
+                        </div>
                     </div>
                     <div ref={termEndRef} />
                 </div>

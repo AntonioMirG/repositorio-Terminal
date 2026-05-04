@@ -37,7 +37,8 @@
     box-sizing: border-box;
 }
 
-html, body {
+html,
+body {
     width: 100%;
     height: 100%;
     overflow: hidden;
@@ -89,18 +90,26 @@ html, body {
 }
 
 @keyframes ambientFloat {
-    0% { opacity: 0.5; transform: translateY(0); }
-    100% { opacity: 1; transform: translateY(-10px); }
+    0% {
+        opacity: 0.5;
+        transform: translateY(0);
+    }
+
+    100% {
+        opacity: 1;
+        transform: translateY(-10px);
+    }
 }
 
 /* ─── Terminal frame ─── */
 .terminal-frame {
-    width: 100%;
-    max-width: 1050px;
+    width: calc(100vw - 40px);
+    max-width: 1200px;
     height: 85vh;
     min-height: 500px;
     display: flex;
     flex-direction: column;
+    flex-shrink: 0;
     border-radius: 10px;
     overflow: hidden;
     box-shadow:
@@ -141,16 +150,59 @@ html, body {
     position: relative;
     transition: filter 0.2s;
 }
-.titlebar-btn:hover { filter: brightness(1.3); }
 
-.titlebar-btn.close { background: #ff5f57; }
-.titlebar-btn.minimize { background: #ffbd2e; }
-.titlebar-btn.maximize { background: #28c940; }
+.titlebar-btn:hover {
+    filter: brightness(1.3);
+}
+
+.titlebar-btn.close {
+    background: #ff5f57;
+}
+
+.titlebar-btn.minimize {
+    background: #ffbd2e;
+}
+
+.titlebar-btn.maximize {
+    background: #28c940;
+}
 
 /* Tiny icons inside the traffic lights on hover */
-.titlebar-btn.close:hover::after { content: '✕'; font-size: 8px; color: #4a0000; position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-weight: 900; }
-.titlebar-btn.minimize:hover::after { content: '−'; font-size: 11px; color: #5a3e00; position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-weight: 900; }
-.titlebar-btn.maximize:hover::after { content: '+'; font-size: 10px; color: #0a4a00; position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-weight: 900; }
+.titlebar-btn.close:hover::after {
+    content: '✕';
+    font-size: 8px;
+    color: #4a0000;
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 900;
+}
+
+.titlebar-btn.minimize:hover::after {
+    content: '−';
+    font-size: 11px;
+    color: #5a3e00;
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 900;
+}
+
+.titlebar-btn.maximize:hover::after {
+    content: '+';
+    font-size: 10px;
+    color: #0a4a00;
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 900;
+}
 
 .titlebar-title {
     flex: 1;
@@ -177,13 +229,15 @@ html, body {
     font-family: var(--term-font);
     transition: all 0.2s;
 }
+
 .titlebar-tab.active {
     color: #aaa;
     background: var(--term-bg);
 }
+
 .titlebar-tab:hover:not(.active) {
     color: #999;
-    background: rgba(255,255,255,0.03);
+    background: rgba(255, 255, 255, 0.03);
 }
 
 /* ─── Terminal body ─── */
@@ -208,13 +262,11 @@ html, body {
     position: absolute;
     inset: 0;
     pointer-events: none;
-    background: repeating-linear-gradient(
-        0deg,
-        transparent,
-        transparent 2px,
-        rgba(0, 0, 0, 0.04) 2px,
-        rgba(0, 0, 0, 0.04) 4px
-    );
+    background: repeating-linear-gradient(0deg,
+            transparent,
+            transparent 2px,
+            rgba(0, 0, 0, 0.04) 2px,
+            rgba(0, 0, 0, 0.04) 4px);
     z-index: 100;
 }
 
@@ -222,13 +274,16 @@ html, body {
 .terminal-body::-webkit-scrollbar {
     width: 8px;
 }
+
 .terminal-body::-webkit-scrollbar-track {
     background: var(--term-scrollbar-bg);
 }
+
 .terminal-body::-webkit-scrollbar-thumb {
     background: var(--term-scrollbar-thumb);
     border-radius: 4px;
 }
+
 .terminal-body::-webkit-scrollbar-thumb:hover {
     background: #444;
 }
@@ -269,51 +324,106 @@ html, body {
     user-select: none;
 }
 
-.prompt-user { color: var(--term-prompt-user); font-weight: 700; }
-.prompt-at { color: var(--term-dim); }
-.prompt-host { color: var(--term-prompt-host); font-weight: 700; }
-.prompt-separator { color: var(--term-dim); }
-.prompt-path { color: var(--term-prompt-path); font-weight: 500; }
-.prompt-symbol { color: var(--term-prompt-symbol); }
-.prompt-git { color: var(--term-magenta); font-weight: 500; }
+.prompt-user {
+    color: var(--term-prompt-user);
+    font-weight: 700;
+}
+
+.prompt-at {
+    color: var(--term-dim);
+}
+
+.prompt-host {
+    color: var(--term-prompt-host);
+    font-weight: 700;
+}
+
+.prompt-separator {
+    color: var(--term-dim);
+}
+
+.prompt-path {
+    color: var(--term-prompt-path);
+    font-weight: 500;
+}
+
+.prompt-symbol {
+    color: var(--term-prompt-symbol);
+}
+
+.prompt-git {
+    color: var(--term-magenta);
+    font-weight: 500;
+}
 
 /* ─── Input line ─── */
 .input-line {
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     position: relative;
+    width: 100%;
 }
 
-.input-line input {
-    background: transparent;
-    border: none;
-    color: var(--term-white);
-    font-family: var(--term-font);
-    font-size: var(--term-font-size);
-    line-height: var(--term-line-height);
-    outline: none;
+.input-container {
+    display: flex;
+    flex-wrap: wrap;
+    position: relative;
     flex: 1;
-    caret-color: transparent; /* We use a custom cursor */
+    min-height: 1.6em;
+}
+
+.hidden-input {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    cursor: text;
+    border: none;
+    outline: none;
+    background: transparent;
+    font-family: inherit;
+    font-size: inherit;
     padding: 0;
     margin: 0;
+    z-index: 10;
+}
+
+.input-text-before,
+.input-text-after {
+    white-space: pre-wrap;
+    word-break: break-all;
+    color: var(--term-white);
 }
 
 /* Blinking block cursor */
 .cursor-block {
     display: inline-block;
-    width: 8px;
-    height: 17px;
+    width: 8.5px;
+    height: 1.2em;
     background: var(--term-green);
     animation: blink 1s step-end infinite;
     vertical-align: middle;
-    margin-left: 1px;
+    margin: 0;
+    flex-shrink: 0;
+    color: var(--term-bg);
+    text-align: center;
+    line-height: 1.2em;
     position: relative;
-    top: 1px;
+    top: -1px;
 }
 
 @keyframes blink {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0; }
+
+    0%,
+    100% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0;
+    }
 }
 
 /* ─── Special command outputs ─── */
@@ -373,21 +483,59 @@ html, body {
     margin: 2px 0;
 }
 
-.ls-dir { color: #5555ff; font-weight: 700; }
-.ls-file { color: var(--term-text); }
-.ls-exec { color: var(--term-green); font-weight: 700; }
-.ls-link { color: var(--term-cyan); }
-.ls-hidden { color: var(--term-dim); }
+.ls-dir {
+    color: #5555ff;
+    font-weight: 700;
+}
+
+.ls-file {
+    color: var(--term-text);
+}
+
+.ls-exec {
+    color: var(--term-green);
+    font-weight: 700;
+}
+
+.ls-link {
+    color: var(--term-cyan);
+}
+
+.ls-hidden {
+    color: var(--term-dim);
+}
 
 /* tree output */
-.tree-branch { color: var(--term-dim); }
-.tree-dir { color: #5555ff; font-weight: 700; }
-.tree-file { color: var(--term-text); }
+.tree-branch {
+    color: var(--term-dim);
+}
+
+.tree-dir {
+    color: #5555ff;
+    font-weight: 700;
+}
+
+.tree-file {
+    color: var(--term-text);
+}
 
 /* man page */
-.man-header { color: var(--term-white); font-weight: 700; text-transform: uppercase; }
-.man-section { color: var(--term-yellow); font-weight: 600; margin-top: 4px; }
-.man-text { color: var(--term-text); padding-left: 16px; }
+.man-header {
+    color: var(--term-white);
+    font-weight: 700;
+    text-transform: uppercase;
+}
+
+.man-section {
+    color: var(--term-yellow);
+    font-weight: 600;
+    margin-top: 4px;
+}
+
+.man-text {
+    color: var(--term-text);
+    padding-left: 16px;
+}
 
 /* htop bars */
 .htop-bar-container {
@@ -403,8 +551,16 @@ html, body {
     transition: width 0.5s ease;
 }
 
-.htop-label { color: var(--term-cyan); min-width: 50px; }
-.htop-value { color: var(--term-dim); min-width: 45px; text-align: right; }
+.htop-label {
+    color: var(--term-cyan);
+    min-width: 50px;
+}
+
+.htop-value {
+    color: var(--term-dim);
+    min-width: 45px;
+    text-align: right;
+}
 
 /* Welcome banner */
 .welcome-banner {
@@ -467,8 +623,13 @@ html, body {
 }
 
 @keyframes rain {
-    0% { top: -100vh; }
-    100% { top: 100vh; }
+    0% {
+        top: -100vh;
+    }
+
+    100% {
+        top: 100vh;
+    }
 }
 
 /* ─── Status bar ─── */
@@ -487,7 +648,8 @@ html, body {
     user-select: none;
 }
 
-.statusbar-left, .statusbar-right {
+.statusbar-left,
+.statusbar-right {
     display: flex;
     align-items: center;
     gap: 12px;
@@ -504,7 +666,7 @@ html, body {
     height: 6px;
     border-radius: 50%;
     background: var(--term-green);
-    box-shadow: 0 0 4px rgba(0,255,65,0.4);
+    box-shadow: 0 0 4px rgba(0, 255, 65, 0.4);
 }
 
 /* ─── Responsive ─── */
@@ -512,22 +674,27 @@ html, body {
     .terminal-wrapper {
         padding: 0;
     }
+
     .terminal-frame {
         border-radius: 0;
         height: 100vh;
         max-width: 100%;
     }
+
     .terminal-body {
         padding: 12px 10px;
         font-size: 12px;
     }
+
     .neofetch-container {
         flex-direction: column;
         gap: 8px;
     }
+
     .neofetch-ascii {
         font-size: 8px;
     }
+
     :root {
         --term-font-size: 12px;
     }

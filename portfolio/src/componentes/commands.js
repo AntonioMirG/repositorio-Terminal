@@ -1,39 +1,16 @@
-import { FILESYSTEM, THEMES, NEOFETCH_ASCII } from './filesystem';
+import { resolvePath, lsOutput, startTime, THEMES, NEOFETCH_ASCII } from './filesystem';
 
-const startTime = Date.now();
-
-function resolvePath(currentDir, target) {
-    if (!target || target === '~' || target === '/') return '/';
-    if (target === '..') {
-        const parts = currentDir.split('/').filter(Boolean);
-        parts.pop();
-        return parts.length === 0 ? '/' : `/${parts.join('/')}`;
-    }
-    if (target.startsWith('/')) return target;
-    return `${currentDir === '/' ? '' : currentDir}/${target}`;
-}
-
-function getFileContent(currentDir, name) {
-    const fullKey = `${currentDir === '/' ? '' : currentDir}/${name}`;
-    return FILESYSTEM.files[name] || FILESYSTEM.files[fullKey] || null;
-}
-
-function lsOutput(files) {
-    return {
-        type: 'component', component: 'ls',
-        data: files.map(f => ({
-            name: f,
-            isDir: f.endsWith('/'),
-            isHidden: f.startsWith('.'),
-            isExec: f.endsWith('.js') || f.endsWith('.sh'),
-        }))
-    };
-}
-
-export function executeCommand(cmd, args, currentDir, setDir, commandHistory, setTheme, setMatrix, isMatrix) {
+export function executeCommand(cmd, args, currentDir, setDir, commandHistory, setTheme, setMatrix, isMatrix, fs, onOpenEditor) {
     const results = [];
     const out = (content, type = 'output') => results.push({ type, content });
     const html = (component, data) => results.push({ type: 'component', component, data });
+
+    const getFileContentLocal = (dir, name) => {
+        // Handle both simple name and absolute path
+        if (name.startsWith('/')) return fs.files[name] || null;
+        const fullPath = dir === '/' ? `/${name}` : `${dir}/${name}`;
+        return fs.files[name] || fs.files[fullPath] || null;
+    };
 
     switch (cmd) {
         case 'help': {
@@ -42,38 +19,26 @@ export function executeCommand(cmd, args, currentDir, setDir, commandHistory, se
   ls [dir]          Lista archivos y directorios
   cd <dir>          Cambia de directorio
   cat <archivo>     Muestra contenido de un archivo
-  pwd               Muestra el directorio actual
+  gui / admin       ¡NUEVO! Abre la interfaz gráfica
   clear             Limpia la terminal
-  whoami            Muestra el usuario actual
-  hostname          Muestra el nombre del host
-  date              Muestra fecha y hora
-  uname [-a]        Información del sistema
-  uptime            Tiempo de actividad
-  echo <texto>      Imprime texto
-  history           Historial de comandos
-  tree [dir]        Árbol de directorios
-  grep <patrón> <archivo>  Busca en archivos
-  find <nombre>     Busca archivos por nombre
-  wc <archivo>      Cuenta líneas/palabras/chars
-  head <archivo>    Primeras líneas de un archivo
-  tail <archivo>    Últimas líneas de un archivo
-  man <comando>     Manual de un comando
-  neofetch          Info del sistema con ASCII art
-  htop              Monitor de procesos simulado
-  ping <host>       Ping simulado
-  curl <url>        Petición HTTP simulada
-  wget <url>        Descarga simulada
-  chmod             Cambiar permisos (simulado)
-  sudo <cmd>        Ejecutar como root
-  theme <nombre>    Cambiar tema (${Object.keys(THEMES).join(', ')})
+  neofetch          Info del sistema
+  theme <nombre>    Cambiar tema
   matrix            Easter egg
-  exit              Salir (¿o no?)
+  ... y muchos más comandos Linux reales.
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
             break;
         }
+        case 'gui':
+        case 'admin':
+        case 'editor':
+            out('Iniciando interfaz gráfica de administración...', 'success');
+            setTimeout(() => {
+                onOpenEditor();
+            }, 600);
+            break;
         case 'ls': {
             const target = resolvePath(currentDir, args[0]);
-            const files = FILESYSTEM.dirs[target];
+            const files = fs.dirs[target];
             if (files) {
                 if (args.includes('-la') || args.includes('-l') || args.includes('-al')) {
                     out(`total ${files.length * 4}`);
@@ -81,7 +46,7 @@ export function executeCommand(cmd, args, currentDir, setDir, commandHistory, se
                         const isDir = f.endsWith('/');
                         const perms = isDir ? 'drwxr-xr-x' : '-rw-r--r--';
                         const size = isDir ? '4096' : `${Math.floor(Math.random() * 9000 + 1000)}`;
-                        out(`${perms}  1 guest guest ${size.padStart(5)} abr 28 10:${String(Math.floor(Math.random()*59)).padStart(2,'0')} ${f}`);
+                        out(`${perms}  1 guest guest ${size.padStart(5)} abr 28 10:${String(Math.floor(Math.random() * 59)).padStart(2, '0')} ${f}`);
                     });
                 } else if (args.includes('-a')) {
                     const all = ['.', '..', ...files];
@@ -96,13 +61,13 @@ export function executeCommand(cmd, args, currentDir, setDir, commandHistory, se
         }
         case 'cd': {
             const target = resolvePath(currentDir, args[0]);
-            if (FILESYSTEM.dirs[target]) { setDir(target); }
+            if (fs.dirs[target]) { setDir(target); }
             else { out(`bash: cd: ${args[0]}: No existe el fichero o el directorio`, 'error'); }
             break;
         }
         case 'cat': {
             if (!args[0]) { out('cat: falta el operando', 'error'); break; }
-            const content = getFileContent(currentDir, args[0]);
+            const content = getFileContentLocal(currentDir, args[0]);
             if (content) { out(content); }
             else { out(`cat: ${args[0]}: No existe el fichero o el directorio`, 'error'); }
             break;
@@ -128,7 +93,7 @@ export function executeCommand(cmd, args, currentDir, setDir, commandHistory, se
             break;
         case 'tree': {
             const target = resolvePath(currentDir, args[0]);
-            const entries = FILESYSTEM.dirs[target];
+            const entries = fs.dirs[target];
             if (!entries) { out(`tree: '${args[0] || target}': No existe`, 'error'); break; }
             const pathLabel = target === '/' ? '.' : target;
             out(pathLabel);
@@ -138,7 +103,7 @@ export function executeCommand(cmd, args, currentDir, setDir, commandHistory, se
                 out(`${prefix}${e}`);
                 if (e.endsWith('/')) {
                     const subPath = `${target === '/' ? '' : target}/${e.replace('/', '')}`;
-                    const subEntries = FILESYSTEM.dirs[subPath];
+                    const subEntries = fs.dirs[subPath];
                     if (subEntries) {
                         const connector = isLast ? '    ' : '│   ';
                         subEntries.forEach((se, si) => {
@@ -156,7 +121,7 @@ export function executeCommand(cmd, args, currentDir, setDir, commandHistory, se
         case 'grep': {
             if (args.length < 2) { out('Uso: grep <patrón> <archivo>', 'error'); break; }
             const [pattern, file] = [args[0], args[1]];
-            const content = getFileContent(currentDir, file);
+            const content = getFileContentLocal(currentDir, file);
             if (!content) { out(`grep: ${file}: No existe`, 'error'); break; }
             const matches = content.split('\n').filter(l => l.toLowerCase().includes(pattern.toLowerCase()));
             if (matches.length === 0) out('(sin resultados)');
@@ -167,8 +132,8 @@ export function executeCommand(cmd, args, currentDir, setDir, commandHistory, se
             if (!args[0]) { out('Uso: find <nombre>', 'error'); break; }
             const q = args[0].toLowerCase();
             const found = [];
-            Object.keys(FILESYSTEM.dirs).forEach(dir => {
-                FILESYSTEM.dirs[dir].forEach(f => {
+            Object.keys(fs.dirs).forEach(dir => {
+                fs.dirs[dir].forEach(f => {
                     if (f.toLowerCase().includes(q)) found.push(`${dir === '/' ? '' : dir}/${f}`);
                 });
             });
@@ -178,7 +143,7 @@ export function executeCommand(cmd, args, currentDir, setDir, commandHistory, se
         }
         case 'wc': {
             if (!args[0]) { out('Uso: wc <archivo>', 'error'); break; }
-            const content = getFileContent(currentDir, args[0]);
+            const content = getFileContentLocal(currentDir, args[0]);
             if (!content) { out(`wc: ${args[0]}: No existe`, 'error'); break; }
             const lines = content.split('\n').length;
             const words = content.split(/\s+/).filter(Boolean).length;
@@ -187,14 +152,14 @@ export function executeCommand(cmd, args, currentDir, setDir, commandHistory, se
         }
         case 'head': {
             if (!args[0]) { out('Uso: head <archivo>', 'error'); break; }
-            const content = getFileContent(currentDir, args[0]);
+            const content = getFileContentLocal(currentDir, args[0]);
             if (!content) { out(`head: ${args[0]}: No existe`, 'error'); break; }
             content.split('\n').slice(0, 10).forEach(l => out(l));
             break;
         }
         case 'tail': {
             if (!args[0]) { out('Uso: tail <archivo>', 'error'); break; }
-            const content = getFileContent(currentDir, args[0]);
+            const content = getFileContentLocal(currentDir, args[0]);
             if (!content) { out(`tail: ${args[0]}: No existe`, 'error'); break; }
             content.split('\n').slice(-10).forEach(l => out(l));
             break;
@@ -207,6 +172,7 @@ export function executeCommand(cmd, args, currentDir, setDir, commandHistory, se
                 cd: 'cd - cambia el directorio de trabajo\n\nSINOPSIS: cd [directorio]\n\nUsa ".." para subir un nivel.',
                 cat: 'cat - concatena y muestra archivos\n\nSINOPSIS: cat <archivo>',
                 grep: 'grep - busca patrones en archivos\n\nSINOPSIS: grep <patrón> <archivo>',
+                gui: 'gui - abre el editor gráfico de administración',
             };
             out(manPages[c] || `No hay entrada de manual para ${c}`);
             break;
@@ -309,7 +275,7 @@ export function executeCommand(cmd, args, currentDir, setDir, commandHistory, se
                 setTheme(args[0]);
                 out(`✔ Tema cambiado a: ${THEMES[args[0]].name}`, 'success');
             } else {
-                out(`Temas disponibles: ${Object.entries(THEMES).map(([k,v]) => `${k} (${v.name})`).join(', ')}`, 'error');
+                out(`Temas disponibles: ${Object.entries(THEMES).map(([k, v]) => `${k} (${v.name})`).join(', ')}`, 'error');
             }
             break;
         }
@@ -328,7 +294,7 @@ export function executeCommand(cmd, args, currentDir, setDir, commandHistory, se
             out(`  _   _      _ _       \n | | | | ___| | | ___  \n | |_| |/ _ \\ | |/ _ \\ \n |  _  |  __/ | | (_) |\n |_| |_|\\___|_|_|\\___/ \n\n(figlet simulado para: "${t}")`);
             break;
         }
-        case 'fortune':
+        case 'fortune': {
             const fortunes = [
                 '"El código limpio siempre parece que fue escrito por alguien que se preocupa." — Robert C. Martin',
                 '"Primero resuelve el problema. Después, escribe el código." — John Johnson',
@@ -338,6 +304,7 @@ export function executeCommand(cmd, args, currentDir, setDir, commandHistory, se
             ];
             out(fortunes[Math.floor(Math.random() * fortunes.length)]);
             break;
+        }
         case 'clear': return 'CLEAR';
         case '': break;
         default:
