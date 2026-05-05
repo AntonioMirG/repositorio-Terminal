@@ -166,6 +166,14 @@ const FirestoreCRUD = () => {
                         <label>Live Demo</label>
                         <input value={form.live} onChange={e => setForm({...form, live: e.target.value})} />
                     </div>
+                    <div className="form-group">
+                        <label>Estado</label>
+                        <select value={form.estado} onChange={e => setForm({...form, estado: e.target.value})}>
+                            <option>✅ Completado</option>
+                            <option>🔧 En desarrollo</option>
+                            <option>🚀 En producción</option>
+                        </select>
+                    </div>
                     
                     <div className="form-group full-width">
                         <label>Imágenes (puedes seleccionar varias)</label>
