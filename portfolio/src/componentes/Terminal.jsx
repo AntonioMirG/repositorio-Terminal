@@ -22,7 +22,7 @@ const Terminal = ({ fs, onOpenEditor }) => {
     useEffect(() => {
         setHistory([
             { type: 'component', component: 'welcome', data: WELCOME_ASCII },
-            { type: 'system', content: `Terminal Portfolio ${new Date().toLocaleDateString('es-ES')}` },
+            { type: 'system', content: `Terminal Porfolio ${new Date().toLocaleDateString('es-ES')}` },
             { type: 'system', content: "Escribe 'help' para ver los comandos disponibles.\n" },
         ]);
     }, []);
@@ -58,7 +58,7 @@ const Terminal = ({ fs, onOpenEditor }) => {
 
     const getPrompt = () => {
         const path = currentDir === '/' ? '~' : `~/${currentDir.substring(1)}`;
-        return { user: 'guest', host: 'portfolio', path };
+        return { user: 'guest', host: 'porfolio', path };
     };
 
     const PromptDisplay = ({ prompt }) => (
@@ -144,10 +144,10 @@ const Terminal = ({ fs, onOpenEditor }) => {
             }
         } else if (e.key === 'ArrowDown') {
             e.preventDefault();
-            if (historyIdx > 0) { 
+            if (historyIdx > 0) {
                 const val = cmdHistory[historyIdx - 1];
-                setHistoryIdx(historyIdx - 1); 
-                setInput(val); 
+                setHistoryIdx(historyIdx - 1);
+                setInput(val);
                 setCursorPos(val.length);
             }
             else if (historyIdx === 0) { setHistoryIdx(-1); setInput(''); setCursorPos(0); }
@@ -241,9 +241,39 @@ const Terminal = ({ fs, onOpenEditor }) => {
                 default: return null;
             }
         }
+        const renderContentWithImages = (content) => {
+            if (typeof content !== 'string') return content;
+            
+            // Regex para detectar ![alt](url)
+            const regex = /!\[(.*?)\]\((.*?)\)/g;
+            const parts = [];
+            let lastIdx = 0;
+            let match;
+
+            while ((match = regex.exec(content)) !== null) {
+                // Texto antes de la imagen
+                if (match.index > lastIdx) {
+                    parts.push(content.substring(lastIdx, match.index));
+                }
+                // Componente imagen
+                parts.push(
+                    <div key={match.index} className="terminal-image-container">
+                        <img src={match[2]} alt={match[1]} className="terminal-inline-image" />
+                    </div>
+                );
+                lastIdx = regex.lastIndex;
+            }
+
+            if (lastIdx < content.length) {
+                parts.push(content.substring(lastIdx));
+            }
+
+            return parts.length > 0 ? parts : content;
+        };
+
         return (
             <div key={i} className={`line ${line.type}`}>
-                {line.content}
+                {renderContentWithImages(line.content)}
             </div>
         );
     };
@@ -261,7 +291,7 @@ const Terminal = ({ fs, onOpenEditor }) => {
                         <button className="titlebar-btn maximize" aria-label="Maximize" />
                     </div>
                     <span className="titlebar-title">
-                        guest@portfolio: {currentDir === '/' ? '~' : `~/${currentDir.substring(1)}`}
+                        guest@porfolio: {currentDir === '/' ? '~' : `~/${currentDir.substring(1)}`}
                     </span>
                     <div className="titlebar-tabs">
                         <span className="titlebar-tab active">bash</span>

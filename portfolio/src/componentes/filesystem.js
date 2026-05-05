@@ -5,24 +5,24 @@
 export const INITIAL_FILESYSTEM = {
         dirs: {
                 '/': ['.bashrc', '.profile', 'about.txt', 'skills.txt', 'projects/', 'contact.txt', 'experience/', '.secret'],
-                '/projects': ['README.md', 'ecommerce-api/', 'terminal-portfolio/', 'weather-app/', 'chat-realtime/'],
+                '/projects': ['README.md', 'ecommerce-api/', 'terminal-porfolio/', 'weather-app/', 'chat-realtime/'],
                 '/projects/ecommerce-api': ['package.json', 'server.js', 'README.md'],
-                '/projects/terminal-portfolio': ['package.json', 'src/', 'README.md'],
+                '/projects/terminal-porfolio': ['package.json', 'src/', 'README.md'],
                 '/projects/weather-app': ['index.html', 'app.js', 'style.css'],
                 '/projects/chat-realtime': ['server.js', 'client.js', 'README.md'],
                 '/experience': ['frontend.md', 'backend.md', 'devops.md'],
         },
         files: {
-                '.bashrc': '# ~/.bashrc\nexport PS1="\\u@\\h:\\w\\$ "\nexport EDITOR=vim\nalias ll="ls -la"\nalias gs="git status"\n# Portfolio loaded successfully',
+                '.bashrc': '# ~/.bashrc\nexport PS1="\\u@\\h:\\w\\$ "\nexport EDITOR=vim\nalias ll="ls -la"\nalias gs="git status"\n# Porfolio loaded successfully',
                 '.profile': '# ~/.profile\n# Executed on login\necho "Welcome back, developer!"',
                 '.secret': '🎮 Konami Code: ↑↑↓↓←→←→BA\n🐛 Has encontrado el archivo secreto!\n💡 Prueba el comando "matrix" para un easter egg.',
                 'about.txt': `  SOBRE MI
   ========
 
-  Soy un Desarrollador Fullstack apasionado
-  por crear soluciones eficientes y elegantes.
+  Soy un Desarrollador Fullstack que busca
+  crear soluciones sencillas y modernas.
 
-  * 1 ano de experiencia
+  * 1 año de experiencia con el stack MERN
   * Enfoque en clean code
   * Apasionado por DevOps & Cloud, IA y Big Data`,
                 'skills.txt': `TECHNICAL SKILLS
@@ -32,7 +32,9 @@ export const INITIAL_FILESYSTEM = {
   |-- React / Next.js      #################### 95%
   |-- Vue.js               ################.... 80%
   |-- JavaScript           #################### 90%
-  |-- Tailwind / CSS       #################### 92%
+  |-- CSS                  #################### 92%
+  |-- Tailwind             #####............... 25%
+
   \`-- HTML5                #################### 98%
 
 [Backend]
@@ -63,10 +65,10 @@ API REST completa para tienda online.
 Tech: Node.js, Express, MongoDB, JWT
 Features: Auth, CRUD productos, carrito, pagos con Stripe
 Estado: ✅ En producción`,
-                '/projects/terminal-portfolio/package.json': '{\n  "name": "terminal-portfolio",\n  "version": "2.0.0",\n  "dependencies": {\n    "react": "^19.0",\n    "vite": "^8.0"\n  }\n}',
-                '/projects/terminal-portfolio/README.md': `# 💻 Terminal Portfolio
+                '/projects/terminal-porfolio/package.json': '{\n  "name": "terminal-porfolio",\n  "version": "2.0.0",\n  "dependencies": {\n    "react": "^19.0",\n    "vite": "^8.0"\n  }\n}',
+                '/projects/terminal-porfolio/README.md': `# 💻 Terminal Porfolio
 ━━━━━━━━━━━━━━━━━━━━━━
-¡Este proyecto! Portfolio interactivo con interfaz de terminal.
+¡Este proyecto! Porfolio interactivo con interfaz de terminal.
 
 Tech: React, Vite, CSS
 Features: Filesystem virtual, comandos Linux, temas
@@ -117,7 +119,7 @@ export const THEMES = {
 };
 
 export const WELCOME_ASCII = `
-  PORTFOLIO TERMINAL v2.0
+  Porfolio de Antonio Mir
   =======================
   Bienvenido al entorno de desarrollo de Antonio Mir.`;
 
